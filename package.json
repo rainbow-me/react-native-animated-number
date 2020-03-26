@@ -1,0 +1,46 @@
+{
+  "name": "@rainbow-me/react-native-animated-number",
+  "version": "0.0.1",
+  "description": "React Native component for smoothly animating a number",
+  "main": "dist",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rainbow-me/react-native-animated-number.git"
+  },
+  "author": "Mike Demarais <mike@rainbow.me> (@mikedemarais)",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "prettify": "yarn prettier --write \"**/*.js\"",
+    "test": "jest"
+  },
+  "keywords": [
+    "react",
+    "native",
+    "react-native",
+    "number",
+    "animated",
+    "component"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/polyfill": "^7.8.7",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-react": "^7.9.1",
+    "prettier": "^2.0.1",
+    "prop-types": "^15.7.2"
+  },
+  "dependencies": {
+    "react-merge-refs": "^1.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/rainbow-me/react-native-animated-number/issues"
+  },
+  "homepage": "https://github.com/rainbow-me/react-native-animated-number#readme"
+}
