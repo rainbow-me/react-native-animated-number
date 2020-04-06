@@ -9,7 +9,23 @@ import React, {
 import mergeRefs from "react-merge-refs";
 import { InteractionManager, TextInput } from "react-native";
 
-const clearHandle = (handle) => handle && clearInterval(handle);
+function useTimeout() {
+  const handle = useRef();
+
+  const start = useCallback((func, ms) => {
+    handle.current = setTimeout(func, ms);
+  }, []);
+
+  const stop = useCallback(
+    () => handle.current && clearTimeout(handle.current),
+    []
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => stop(), []);
+
+  return [start, stop];
+}
 
 const AnimatedNumber = forwardRef(
   (
@@ -17,6 +33,7 @@ const AnimatedNumber = forwardRef(
       disableTabularNums,
       formatter,
       steps,
+      initialValue,
       style,
       textAlign,
       time,
@@ -26,8 +43,11 @@ const AnimatedNumber = forwardRef(
     ref
   ) => {
     const currentValue = useRef(value);
-    const intervalHandle = useRef();
+    const initialValueRef = useRef(initialValue);
     const textInputRef = useRef();
+
+    const [startAnimationTimeout, stopAnimationTimeout] = useTimeout();
+    const [startInitialValueTimeout] = useTimeout();
 
     const isPositive = useMemo(() => value - currentValue.current > 0, [value]);
     const stepSize = useMemo(
@@ -50,19 +70,40 @@ const AnimatedNumber = forwardRef(
       }
 
       if (isComplete) {
-        clearHandle(intervalHandle.current);
+        stopAnimationTimeout();
       }
-    }, [formatter, isPositive, stepSize, value]);
+    }, [formatter, isPositive, stepSize, stopAnimationTimeout, value]);
+
+    const startAnimateNumber = useCallback(() => {
+      stopAnimationTimeout();
+      InteractionManager.runAfterInteractions(() => {
+        animateNumber();
+        startAnimationTimeout(startAnimateNumber, Number(time));
+      });
+    }, [animateNumber, startAnimationTimeout, stopAnimationTimeout, time]);
 
     useEffect(() => {
-      if (currentValue.current !== value) {
-        clearHandle(intervalHandle.current);
-        InteractionManager.runAfterInteractions(() => {
-          intervalHandle.current = setInterval(animateNumber, Number(time));
-        });
+      // If the component was resetted
+      // We need to reset the number and restart the animation
+      if (initialValueRef.current !== initialValue) {
+        stopAnimationTimeout();
+        currentValue.current = initialValue;
+        startAnimateNumber();
+        startInitialValueTimeout(() => {
+          initialValueRef.current = initialValue;
+        }, Number(time) + 1);
+      } else if (currentValue.current !== value) {
+        startAnimateNumber();
       }
-      return () => clearHandle(intervalHandle.current);
-    }, [animateNumber, time, value]);
+    }, [
+      initialValue,
+      startAnimateNumber,
+      startAnimationTimeout,
+      startInitialValueTimeout,
+      stopAnimationTimeout,
+      time,
+      value,
+    ]);
 
     return (
       <TextInput
@@ -85,6 +126,7 @@ const AnimatedNumber = forwardRef(
 AnimatedNumber.propTypes = {
   disableTabularNums: PropTypes.bool,
   formatter: PropTypes.func,
+  initialValue: PropTypes.number,
   steps: PropTypes.number,
   textAlign: PropTypes.oneOf(["auto", "center", "justify", "left", "right"]),
   time: PropTypes.number,
